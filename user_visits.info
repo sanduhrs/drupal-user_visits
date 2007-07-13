@@ -1,0 +1,5 @@
+; $Id$
+name         = User Visits
+description  = "Shows who has visited a user's profile lately."
+; dependencies = module1 module2 module3
+; package      = "Your arbitrary grouping string"

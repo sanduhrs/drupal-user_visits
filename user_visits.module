@@ -1,0 +1,91 @@
+<?php
+/* $Id$ */
+
+/**
+ * TODO:
+ * delete old entries
+ */
+ 
+/**
+* Implementation of hook_help();
+*/
+function user_visits_help($section='') {
+
+  $output = '';
+
+  switch ($section) {
+    case "admin/help#user-visits":
+      $output = '<p>'.  t("Counts the visits to a user's profile.") .'</p>';
+      break;
+  }
+
+  return $output;
+}
+
+function user_visits_user($op, &$edit, &$account, $category = NULL) {
+  global $user;
+
+  if ($op == 'view') {
+    //Count view
+    if ($user->uid != $account->uid) {
+      user_visits_count($user->uid, $account->uid);
+    }
+    
+    //Display visitors on the user's profile
+//     $items['user_visits_count'] = array(
+//       'title' => t('Total visits'),
+//       'value' => user_visits_total($account->uid),
+//       'class' => 'user-visits',
+//     );
+    
+    $visitors = user_visits_latest($account->uid);
+    if (is_array($visitors)) {
+      foreach ($visitors as $visitor) {
+        $account = user_load(array('uid' => $visitor->vuid));
+        $output .= theme_user_visit($account, $visitor->visit);
+      }
+    }
+    
+    $items['user_visits_' .$i] = array(
+      'title' => t('Latest visitors'),
+      'value' => $output ? $output : t('No visits by now'),
+      'class' => 'user-visits',
+    );
+    
+    return array(t('Profile visits') => $items);
+  }
+}
+
+function user_visits_count($vuid, $uid) {
+  db_query("DELETE FROM {user_visits} WHERE uid=%d AND vuid=%d", $uid, $vuid);
+  db_query("INSERT INTO {user_visits} (uid, vuid, visit) VALUES (%d, %d, %d)", $uid, $vuid, time());
+}
+
+function user_visits_total($uid) {
+  return db_result(db_query("SELECT COUNT(visit) AS count FROM {user_visits} WHERE uid=%d", $uid));
+}
+
+function user_visits_latest($uid, $limit = 10) {
+  $result = db_query("SELECT * FROM {user_visits} WHERE uid=%d ORDER BY visit DESC LIMIT %d", $uid, $limit);
+  while ($visitor = db_fetch_object($result)) {
+    $visitors[] = $visitor;
+  }
+    
+  return $visitors;
+}
+
+function theme_user_visit($account, $timestamp = NULL) {
+
+  $output  = "<div class=\"profile\">\n";
+  $output .= theme('user_picture', $account);
+  $output .= ' <div class="name">'. theme('username', $account) ."</div>\n";
+  
+  if ($timestamp) {
+    $output .= " <div class=\"visit\">". t('!time ago', array('!time' => format_interval(time() - $timestamp))) ."</div>\n";
+//     $output .= " <div class=\"visit\">". format_date($timestamp, 'small') ."</div>\n";
+  }
+
+  $output .= "</div>\n";
+
+  return $output;
+}

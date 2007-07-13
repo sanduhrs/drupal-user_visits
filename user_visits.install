@@ -1,0 +1,19 @@
+<?php
+/* $Id$ */
+
+function user_visits_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {user_visits} (
+                  uid int(10) unsigned NOT NULL,
+                  vuid int(10) unsigned NOT NULL,
+                  visit int(11) NOT NULL,
+                  KEY uid (`uid`)
+                ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;"
+      );
+      break;
+    case 'pgsql':
+      break;
+  }
+}
