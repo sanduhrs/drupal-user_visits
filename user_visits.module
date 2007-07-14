@@ -21,19 +21,20 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
       user_visits_count($account->uid, $user->uid);
     }
     
+    $i = 1;
     $visitors = user_visits_latest($account->uid);
     if (is_array($visitors)) {
       foreach ($visitors as $visitor) {
         $account = user_load(array('uid' => $visitor->vuid));
-        $output .= theme_user_visit($account, $visitor->visit);
+        $output = theme('user_visit', $account, $visitor->visit);
+        
+        $items[] = array(
+          'value' => $output ? $output : t('No visits by now'),
+          'class' => $i,
+        );
+        $i++;
       }
     }
-    
-    $items['user_visits_' .$i] = array(
-      'title' => t('Latest visitors'),
-      'value' => $output ? $output : t('No visits by now'),
-      'class' => 'user-visits',
-    );
     
     return array(t('Profile visits') => $items);
   }
