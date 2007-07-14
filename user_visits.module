@@ -2,41 +2,24 @@
 /* $Id$ */
 
 /**
- * TODO:
- * delete old entries
+ * @file
+ * Shows who has visited a user's profile lately.
+ * 
+ * @author
+ * Stefan Auditor <stefan.auditor@erdfisch.de>
  */
- 
+
 /**
-* Implementation of hook_help();
-*/
-function user_visits_help($section='') {
-
-  $output = '';
-
-  switch ($section) {
-    case "admin/help#user-visits":
-      $output = '<p>'.  t("Counts the visits to a user's profile.") .'</p>';
-      break;
-  }
-
-  return $output;
-}
-
+ * Implementation of hook_user();
+ */
 function user_visits_user($op, &$edit, &$account, $category = NULL) {
   global $user;
 
   if ($op == 'view') {
     //Count view
     if ($user->uid != $account->uid) {
-      user_visits_count($user->uid, $account->uid);
+      user_visits_count($account->uid, $user->uid);
     }
-    
-    //Display visitors on the user's profile
-//     $items['user_visits_count'] = array(
-//       'title' => t('Total visits'),
-//       'value' => user_visits_total($account->uid),
-//       'class' => 'user-visits',
-//     );
     
     $visitors = user_visits_latest($account->uid);
     if (is_array($visitors)) {
@@ -56,15 +39,21 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
   }
 }
 
-function user_visits_count($vuid, $uid) {
+/**
+ * Remember a user's visit
+ * @param uid the visitors user id
+ * @param vuid the visited user's user id
+ */
+function user_visits_count($uid, $vuid) {
   db_query("DELETE FROM {user_visits} WHERE uid=%d AND vuid=%d", $uid, $vuid);
   db_query("INSERT INTO {user_visits} (uid, vuid, visit) VALUES (%d, %d, %d)", $uid, $vuid, time());
 }
 
-function user_visits_total($uid) {
-  return db_result(db_query("SELECT COUNT(visit) AS count FROM {user_visits} WHERE uid=%d", $uid));
-}
-
+/**
+ * Get the latest visitors
+ * @param uid an integer representing a user id
+ * @param limit an integer
+ */
 function user_visits_latest($uid, $limit = 10) {
   $result = db_query("SELECT * FROM {user_visits} WHERE uid=%d ORDER BY visit DESC LIMIT %d", $uid, $limit);
   while ($visitor = db_fetch_object($result)) {
@@ -74,18 +63,26 @@ function user_visits_latest($uid, $limit = 10) {
   return $visitors;
 }
 
-function theme_user_visit($account, $timestamp = NULL) {
-
+/**
+ * Theme a user object
+ * @param user a user object
+ * @return a themed user object in html
+ */
+function theme_user_visit($user, $timestamp = NULL) {
   $output  = "<div class=\"profile\">\n";
-  $output .= theme('user_picture', $account);
-  $output .= ' <div class="name">'. theme('username', $account) ."</div>\n";
-  
+  $output .= theme('user_picture', $user);
+  $output .= ' <div class="name">'. theme('username', $user) ."</div>\n";
   if ($timestamp) {
     $output .= " <div class=\"visit\">". t('!time ago', array('!time' => format_interval(time() - $timestamp))) ."</div>\n";
-//     $output .= " <div class=\"visit\">". format_date($timestamp, 'small') ."</div>\n";
   }
-
   $output .= "</div>\n";
 
   return $output;
+}
+
+/**
+ * Implementation of hook_uninstall();
+ */
+function user_visits_uninstall() {
+  db_query('DROP TABLE {user_visits}');
 }
