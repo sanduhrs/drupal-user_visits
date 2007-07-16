@@ -17,3 +17,10 @@ function user_visits_install() {
       break;
   }
 }
+
+/**
+ * Implementation of hook_uninstall();
+ */
+function user_visits_uninstall() {
+  db_query('DROP TABLE {user_visits}');
+}
