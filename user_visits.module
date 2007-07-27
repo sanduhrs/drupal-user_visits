@@ -14,6 +14,7 @@
  */
 function user_visits_user($op, &$edit, &$account, $category = NULL) {
   global $user;
+  $items = array();
 
   if ($op == 'view') {
     //Count view
@@ -56,6 +57,8 @@ function user_visits_count($uid, $vuid) {
  * @param limit an integer
  */
 function user_visits_latest($uid, $limit = 10) {
+  $visitors = array();
+  
   $result = db_query("SELECT * FROM {user_visits} WHERE uid=%d ORDER BY visit DESC LIMIT %d", $uid, $limit);
   while ($visitor = db_fetch_object($result)) {
     $visitors[] = $visitor;
