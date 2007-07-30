@@ -39,6 +39,9 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
     
     return array(t('Profile visits') => $items);
   }
+  else if ($op == 'delete') {
+    db_query("DELETE FROM {user_visits} WHERE uid=%d", $account->uid);
+  }
 }
 
 /**
