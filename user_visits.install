@@ -1,6 +1,9 @@
 <?php
 /* $Id$ */
 
+/**
+ * Implementation of hook_install().
+ */
 function user_visits_install() {
   switch ($GLOBALS['db_type']) {
     case 'mysql':
@@ -16,4 +19,24 @@ function user_visits_install() {
     case 'pgsql':
       break;
   }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function user_visits_uninstall() {
+  db_query('DROP TABLE {user_visits}');
+}
+
+function user_visits_update_1() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {user_visits} ADD referer VARCHAR(255) NOT NULL default ''");
+      break;
+    case 'pgsql':
+      break;
+  }
+  return $ret;
 }
