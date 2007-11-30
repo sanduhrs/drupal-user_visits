@@ -2,8 +2,8 @@
 /* $Id$ */
 
 /**
- * TODO:
- * delete old entries
+ * @author
+ * Stefan Auditor <stefan.auditor@erdfisch.de>
  */
 
 /**
@@ -21,6 +21,9 @@ function user_visits_help($section = '') {
   return $output;
 }
 
+/**
+* Implementation of hook_menu();
+*/
 function user_visits_menu($may_cache) {
   global $user;
   $items = array();
@@ -84,6 +87,9 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
   }
 }
 
+/**
+* Get latest visitors for block content
+*/
 function user_visits_display_block_1($uid = NULL, $limit = 5) {
   if (!$uid) {
     //try to determine the user's id
@@ -104,40 +110,52 @@ function user_visits_display_block_1($uid = NULL, $limit = 5) {
   return $output;
 }
 
+/**
+* Implementation of hook_perm();
+*/
 function user_visits_perm() {
   return array('administer user visits');
 }
 
+/**
+* Implementation of hook_user();
+*/
 function user_visits_user($op, &$edit, &$account, $category = NULL) {
   global $user;
 
-  if ($op == 'view') {
-    //Count view
-    $referer = referer_uri();
-    //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-    if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
-      user_visits_count($user->uid, $account->uid);
-    }
-
-    //Display visitors on the user's profile
-    if (variable_get('user_activity_display', 0)) {
-      $visitors = user_visits_latest($account->uid);
-      if (is_array($visitors)) {
-        foreach ($visitors as $visitor) {
-          $account = user_load(array('uid' => $visitor->vuid));
-          $output .= theme_user_visit($account, $visitor->visit, $visitor->referer);
-        }
+  switch ($op) {
+    case 'view':
+      //Count view
+      $referer = referer_uri();
+      //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
+      if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
+        user_visits_count($user->uid, $account->uid);
       }
-
-      $items['user_visits_' .$i] = array(
-        'title' => t('Latest visitors'),
-        'value' => $output ? $output : t('No visits by now'),
-        'class' => 'user-visits',
-      );
-      
-      return array(t('User visits') => $items);
-    }
+  
+      //Display visitors on the user's profile
+      if (variable_get('user_activity_display', 0)) {
+        $visitors = user_visits_latest($account->uid);
+        if (is_array($visitors)) {
+          foreach ($visitors as $visitor) {
+            $account = user_load(array('uid' => $visitor->vuid));
+            $output .= theme_user_visit($account, $visitor->visit, $visitor->referer);
+          }
+        }
+  
+        $items['user_visits_' .$i] = array(
+          'title' => t('Latest visitors'),
+          'value' => $output ? $output : t('No visits by now'),
+          'class' => 'user-visits',
+        );
+        
+        return array(t('User visits') => $items);
+      }
+      break;
+    case 'delete':
+      db_query("DELETE FROM {user_visits} WHERE uid=%d", $account->uid);
+  	  break;
   }
+  
 }
 
 function user_visits_count($vuid, $uid) {
