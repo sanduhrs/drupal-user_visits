@@ -26,6 +26,10 @@ function user_visits_install() {
  */
 function user_visits_uninstall() {
   db_query('DROP TABLE {user_visits}');
+
+  variable_del('user_visits_display');
+  variable_del('user_visits_block_items_0');
+  variable_del('user_visits_block_items_1');
 }
 
 function user_visits_update_1() {
