@@ -222,7 +222,6 @@ function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
           $referer = referer_uri();
           //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
           if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
-            drupal_set_message('Nodeprofile count view: '. referer_uri());
             user_visits_count($user->uid, $node->uid);
           }
         }
