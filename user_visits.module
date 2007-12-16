@@ -127,13 +127,16 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
 
   switch ($op) {
     case 'view':
-      //Count view
-      $referer = referer_uri();
-      //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-      if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
-        user_visits_count($user->uid, $account->uid);
+      //Don't count if role is hidden
+      if (!user_visit_is_hidden($user)) {
+        $referer = referer_uri();
+        //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
+        if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
+          //Count view
+          user_visits_count($user->uid, $account->uid);
+        }
       }
-  
+      
       //Display visitors on the user's profile
       if (variable_get('user_activity_display', 0)) {
         $visitors = user_visits_latest($account->uid);
@@ -201,6 +204,22 @@ function user_visits_settings() {
     '#default_value' => variable_get('user_visits_display', 0),
     '#options' => array(t("Don't display."), t('Display on user profile page')),
   );
+  
+  $roles = user_roles(TRUE);
+  $form['user_activity_role'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('moje nastavenie role'),
+    '#description' => t("Choose roles and visits of selected roles will be not shown in user visit block."),
+  );
+  $form['user_activity_role']['user_visits_hidden_roles'] = array(
+      '#type' => 'select',
+      '#title' => t('Hidden Roles'),
+      '#description' => t('visits of selected roles will be not shown in user visit block.'),
+      '#options' => $roles,
+      '#multiple' => TRUE,
+      '#default_value' => variable_get('user_visits_hidden_roles', array()),      
+  );
+  
   return system_settings_form($form);
 }
 
@@ -214,11 +233,14 @@ function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
     case 'view':
       if (!$a3) {
         if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
-          //Count view
-          $referer = referer_uri();
-          //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-          if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
-            user_visits_count($user->uid, $node->uid);
+          //Don't count if role is hidden
+          if (!user_visit_is_hidden($user)) {
+            $referer = referer_uri();
+            //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
+            if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
+              //Count view
+              user_visits_count($user->uid, $node->uid);
+            }
           }
         }
       }
@@ -251,4 +273,12 @@ function theme_user_visits_total($total = 0) {
   $output = '<div class="user_visits_total">'. t('Total visits %total', array('%total' => $total)) .'</div>';
   
   return $output;
+}
+
+/**
+ * Check if user should be counted
+ */
+function user_visit_is_hidden($user) {
+  $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
+  return count($intersect) ? count($intersect) : FALSE;
 }
