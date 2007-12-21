@@ -7,8 +7,8 @@
  */
 
 /**
-* Implementation of hook_help();
-*/
+ * Implementation of hook_help();
+ */
 function user_visits_help($section = '') {
   $output = '';
 
@@ -22,8 +22,8 @@ function user_visits_help($section = '') {
 }
 
 /**
-* Implementation of hook_menu();
-*/
+ * Implementation of hook_menu();
+ */
 function user_visits_menu($may_cache) {
   global $user;
   $items = array();
@@ -68,7 +68,7 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
   }
   else if ($op == 'view') {
     $limit = variable_get('user_visits_block_items_'. $delta, 5);
-    switch($delta) {
+    switch ($delta) {
       case 0:
         $block = array(
           'subject' => t('Latest visitors'),
@@ -88,8 +88,8 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
 }
 
 /**
-* Get latest visitors for block content
-*/
+ * Get latest visitors for block content
+ */
 function user_visits_display_block_1($uid = NULL, $limit = 5) {
   if (!$uid) {
     //try to determine the user's id
@@ -113,15 +113,15 @@ function user_visits_display_block_1($uid = NULL, $limit = 5) {
 }
 
 /**
-* Implementation of hook_perm();
-*/
+ * Implementation of hook_perm();
+ */
 function user_visits_perm() {
   return array('administer user visits');
 }
 
 /**
-* Implementation of hook_user();
-*/
+ * Implementation of hook_user();
+ */
 function user_visits_user($op, &$edit, &$account, $category = NULL) {
   global $user;
 
@@ -131,7 +131,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
       if (!user_visit_is_hidden($user)) {
         $referer = referer_uri();
         //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-        if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
+        if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0) .'/'. arg(1))) {
           //Count view
           user_visits_count($user->uid, $account->uid);
         }
@@ -147,7 +147,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
           }
         }
 
-        $items['user_visits_' .$i] = array(
+        $items['user_visits_'. $i] = array(
           'title' => t('Latest visitors'),
           'value' => $output ? $output : t('No visits by now'),
           'class' => 'user-visits',
@@ -237,7 +237,7 @@ function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
           if (!user_visit_is_hidden($user)) {
             $referer = referer_uri();
             //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-            if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0).'/'.arg(1))) {
+            if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0) .'/'. arg(1))) {
               //Count view
               user_visits_count($user->uid, $node->uid);
             }
