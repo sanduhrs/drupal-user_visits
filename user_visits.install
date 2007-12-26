@@ -31,22 +31,6 @@ function user_visits_install() {
 }
 
 /**
- * Implementation of hook_update().
- */
-function user_visits_update_1() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {user_visits} ADD COLUMN referer VARCHAR(255) NOT NULL DEFAULT '';");
-      break;
-    case 'pgsql':
-      db_add_column($ret, 'user_visits', 'referer', 'varchar(255)', array('default' => "''", 'not null' => TRUE));
-      break;
-  }
-  return $ret;
-}
-
-/**
  * Implementation of hook_uninstall().
  */
 function user_visits_uninstall() {
@@ -67,6 +51,7 @@ function user_visits_update_1() {
       $ret[] = update_sql("ALTER TABLE {user_visits} ADD COLUMN referer VARCHAR(255) NOT NULL DEFAULT '';");
       break;
     case 'pgsql':
+      db_add_column($ret, 'user_visits', 'referer', 'varchar(255)', array('default' => "''", 'not null' => TRUE));
       break;
   }
   return $ret;
