@@ -138,7 +138,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
       }
       
       //Display visitors on the user's profile
-      if (variable_get('user_activity_display', 0)) {
+      if (variable_get('user_visits_display', 0)) {
         $visitors = user_visits_latest($account->uid);
         if (is_array($visitors)) {
           foreach ($visitors as $visitor) {
@@ -194,24 +194,24 @@ function user_visits_latest($uid, $limit = 5) {
  * Settings page
  */
 function user_visits_settings() {
-  $form['user_activity'] = array(
+  $form['user_visits'] = array(
     '#type' => 'fieldset',
     '#title' => t('Display settings'),
     '#description' => t("Choose if you want the visitors to be displayed on the user's profile page or not. Alternatively you may use the provided !blocks to display a user's visitors.", array('!blocks' => l('blocks', 'admin/build/block'))),
   );
-  $form['user_activity']['user_activity_display'] = array(
+  $form['user_visits']['user_visits_display'] = array(
     '#type' => 'radios',
     '#default_value' => variable_get('user_visits_display', 0),
     '#options' => array(t("Don't display."), t('Display on user profile page')),
   );
   
   $roles = user_roles(TRUE);
-  $form['user_activity_role'] = array(
+  $form['user_visits_role'] = array(
     '#type' => 'fieldset',
     '#title' => t('moje nastavenie role'),
     '#description' => t("Choose roles and visits of selected roles will be not shown in user visit block."),
   );
-  $form['user_activity_role']['user_visits_hidden_roles'] = array(
+  $form['user_visits_role']['user_visits_hidden_roles'] = array(
       '#type' => 'select',
       '#title' => t('Hidden Roles'),
       '#description' => t('visits of selected roles will be not shown in user visit block.'),
