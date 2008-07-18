@@ -2,57 +2,51 @@
 /* $Id$ */
 
 /**
+ * Implementation of hook_schema().
+ */
+function user_visits_schema() {
+  $schema['user_visits'] = array(
+    'description' => t('The base table user activity.'),
+    'fields' => array(
+      'uid' => array(
+        'description' => t('The primary identifier for a user.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'vuid' => array(
+        'description' => t('The primary identifier for a visitor.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'visit' => array(
+        'description' => t('Timestamp of visit.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'referer' => array(
+        'description' => t('Whre the user came from.'),
+        'type' => 'varchar',
+        'length' => 255),
+      ),
+    'primary key' => array('uid'),
+  );
+  return $schema;
+}
+
+/**
  * Implementation of hook_install().
  */
 function user_visits_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {user_visits} (
-                  uid int(10) unsigned NOT NULL,
-                  vuid int(10) unsigned NOT NULL,
-                  visit int(11) NOT NULL,
-                  referer VARCHAR(255) NOT NULL default '',
-                  KEY uid (`uid`)
-                ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;"
-      );
-      break;
-    case 'pgsql':
-      db_query("CREATE TABLE {user_visits} (
-                  uid int int_unsigned NOT NULL,
-                  vuid int int_unsigned NOT NULL,
-                  visit int NOT NULL,
-                  referer VARCHAR(255) NOT NULL default ''
-                );"
-      );
-      db_query("CREATE INDEX {user_visits}_uid_idx ON {user_visits} (uid);");
-      break;
-  }
+  drupal_install_schema('user_visits');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function user_visits_uninstall() {
-  db_query('DROP TABLE {user_visits}');
+  drupal_uninstall_schema('user_visits');
 
   variable_del('user_visits_display');
   variable_del('user_visits_block_items_0');
   variable_del('user_visits_block_items_1');
-}
-
-/**
- * Implementation of hook_update().
- */
-function user_visits_update_1() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {user_visits} ADD COLUMN referer VARCHAR(255) NOT NULL DEFAULT '';");
-      break;
-    case 'pgsql':
-      db_add_column($ret, 'user_visits', 'referer', 'varchar(255)', array('default' => "''", 'not null' => TRUE));
-      break;
-  }
-  return $ret;
 }
