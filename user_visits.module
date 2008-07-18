@@ -97,17 +97,19 @@ function user_visits_display_block_1($uid = NULL, $limit = 5) {
       $uid = arg(1);
     }
   }
-  $output = '';
-  
-  $visitors = user_visits_latest($uid, $limit);
-  if (is_array($visitors)) {
-    foreach ($visitors as $visitor) {
-      $account = user_load(array('uid' => $visitor->vuid));
-      $output .= theme_user_visit($account, $visitor->visit);
+  if ($uid) {
+    $output = '';
+    
+    $visitors = user_visits_latest($uid, $limit);
+    if (is_array($visitors)) {
+      foreach ($visitors as $visitor) {
+        $account = user_load(array('uid' => $visitor->vuid));
+        $output .= theme_user_visit($account, $visitor->visit);
+      }
     }
+    
+    $output .= theme('user_visits_total', user_visits_total($uid));
   }
-  
-  $output .= theme('user_visits_total', user_visits_total($uid));
   
   return $output;
 }
