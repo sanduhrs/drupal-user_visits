@@ -163,7 +163,8 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
  * Update counter
  */
 function user_visits_count($vuid, $uid) {
-  return db_query("UPDATE {user_visits} SET visit=%d, referer='%s' WHERE uid=%d AND vuid=%d", time(), referer_uri(), $uid, $vuid);
+  db_query("DELETE FROM {user_visits} WHERE uid=%d AND vuid=%d", $uid, $vuid);
+  return db_query("INSERT INTO {user_visits} (uid, vuid, visit, referer) VALUES (%d, %d, %d, '%s')", $uid, $vuid, time(), referer_uri());
 }
 
 /**
