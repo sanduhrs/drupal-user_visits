@@ -2,6 +2,8 @@
 /* $Id$ */
 
 /**
+ * User visits
+ * 
  * @author
  * Stefan Auditor <stefan.auditor@erdfisch.de>
  */
@@ -85,15 +87,10 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
  * Get latest visitors for block content
  */
 function user_visits_display_block_1($uid = NULL, $limit = 5) {
-  if (!$uid) {
-    //try to determine the user's id
-    if (arg(0) == 'user' && is_numeric(arg(1))) {
-      $uid = arg(1);
-    }
+  if (!$uid && (arg(0) == 'user' && is_numeric(arg(1)))) {
+    $uid = arg(1);
   }
   if ($uid) {
-    $output = '';
-    
     $visitors = user_visits_latest($uid, $limit);
     if (is_array($visitors)) {
       foreach ($visitors as $visitor) {
@@ -101,10 +98,8 @@ function user_visits_display_block_1($uid = NULL, $limit = 5) {
         $output .= theme('user_visits', $account, $visitor->visit);
       }
     }
-    
     $output .= theme('user_visits_total', user_visits_total($uid));
   }
-  
   return $output;
 }
 
@@ -132,7 +127,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
           user_visits_count($user->uid, $account->uid);
         }
       }
-
+      
       //Display visitors on the user's profile
       if (variable_get('user_visits_display', 0)) {
         $visitors = user_visits_latest($account->uid);
@@ -156,15 +151,14 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
       db_query("DELETE FROM {user_visits} WHERE uid=%d", $account->uid);
       break;
   }
-
+  
 }
 
 /**
  * Update counter
  */
 function user_visits_count($vuid, $uid) {
-  db_query("DELETE FROM {user_visits} WHERE uid=%d AND vuid=%d", $uid, $vuid);
-  db_query("INSERT INTO {user_visits} (uid, vuid, visit, referer) VALUES (%d, %d, %d, '%s')", $uid, $vuid, time(), referer_uri());
+  return db_query("UPDATE {user_visits} SET visit=%d, referer='%s' WHERE uid=%d AND vuid=%d", time(), referer_uri(), $uid, $vuid);
 }
 
 /**
@@ -182,7 +176,6 @@ function user_visits_latest($uid, $limit = 5) {
   while ($visitor = db_fetch_object($result)) {
     $visitors[] = $visitor;
   }
-
   return $visitors;
 }
 
@@ -191,7 +184,7 @@ function user_visits_latest($uid, $limit = 5) {
  */
 function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   global $user;
-
+  
   switch ($op) {
     case 'view':
       if (!$a3) {
@@ -209,6 +202,14 @@ function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       }
       break;
   }
+}
+
+/**
+ * Check if user should be counted
+ */
+function user_visit_is_hidden($user) {
+  $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
+  return count($intersect) ? count($intersect) : FALSE;
 }
 
 /**
@@ -238,14 +239,11 @@ function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
   $output  = '<div class="profile">'."\n";
   $output .= theme('user_picture', $account);
   $output .= ' <div class="name">'. theme('username', $account) .'</div>'."\n";
-
   if ($timestamp) {
     $output .= $timestamp ? ' <div class="visit">'. t('!time ago', array('!time' => format_interval(time() - $timestamp))) .'</div>'."\n" : '';
     $output .= $referer ? ' <div class="referer">'. t('Referer !link', array('!link' => l($referer, $referer))) .'</div>'."\n" : '';
   }
-
   $output .= '</div>'."\n";
-
   return $output;
 }
 
@@ -254,14 +252,5 @@ function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
  */
 function theme_user_visits_total($total = 0) {
   $output = '<div class="user_visits_total">'. t('Total visits %total', array('%total' => $total)) .'</div>';
-
   return $output;
-}
-
-/**
- * Check if user should be counted
- */
-function user_visit_is_hidden($user) {
-  $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
-  return count($intersect) ? count($intersect) : FALSE;
 }
