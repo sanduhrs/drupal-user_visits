@@ -2,6 +2,8 @@
 /* $Id$ */
 
 /**
+ * User visits
+ * 
  * @author
  * Stefan Auditor <stefan.auditor@erdfisch.de>
  */
@@ -26,8 +28,7 @@ function user_visits_help($section = '') {
  */
 function user_visits_menu($may_cache) {
   global $user;
-  $items = array();
-
+  
   if ($may_cache) {
     $items[] = array(
       'path' => 'admin/user/user_visits',
@@ -47,10 +48,10 @@ function user_visits_menu($may_cache) {
 function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
   if ($op == 'list') {
     $blocks[0] = array(
-      'info' => t('User visits: latest visitors'),
+      'info' => t('Latest visitors'),
     );
     $blocks[1] = array(
-      'info' => t('User visits: my latest visitors'),
+      'info' => t('My latest visitors'),
     );
     return $blocks;
   }
@@ -91,26 +92,19 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
  * Get latest visitors for block content
  */
 function user_visits_display_block_1($uid = NULL, $limit = 5) {
-  if (!$uid) {
-    //try to determine the user's id
-    if (arg(0) == 'user' && is_numeric(arg(1))) {
-      $uid = arg(1);
-    }
+  if (!$uid && (arg(0) == 'user' && is_numeric(arg(1)))) {
+    $uid = arg(1);
   }
   if ($uid) {
-    $output = '';
-    
     $visitors = user_visits_latest($uid, $limit);
     if (is_array($visitors)) {
       foreach ($visitors as $visitor) {
         $account = user_load(array('uid' => $visitor->vuid));
-        $output .= theme_user_visit($account, $visitor->visit);
+        $output .= theme('user_visits', $account, $visitor->visit);
       }
     }
-    
     $output .= theme('user_visits_total', user_visits_total($uid));
   }
-  
   return $output;
 }
 
@@ -145,7 +139,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
         if (is_array($visitors)) {
           foreach ($visitors as $visitor) {
             $account = user_load(array('uid' => $visitor->vuid));
-            $output .= theme_user_visit($account, $visitor->visit, $visitor->referer);
+            $output .= theme('user_visits', $account, $visitor->visit, $visitor->referer);
           }
         }
   
@@ -169,8 +163,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
  * Update counter
  */
 function user_visits_count($vuid, $uid) {
-  db_query("DELETE FROM {user_visits} WHERE uid=%d AND vuid=%d", $uid, $vuid);
-  db_query("INSERT INTO {user_visits} (uid, vuid, visit, referer) VALUES (%d, %d, %d, '%s')", $uid, $vuid, time(), referer_uri());
+  return db_query("UPDATE {user_visits} SET visit=%d, referer='%s' WHERE uid=%d AND vuid=%d", time(), referer_uri(), $uid, $vuid);
 }
 
 /**
@@ -188,8 +181,63 @@ function user_visits_latest($uid, $limit = 5) {
   while ($visitor = db_fetch_object($result)) {
     $visitors[] = $visitor;
   }
-
   return $visitors;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  global $user;
+  
+  switch ($op) {
+    case 'view':
+      if (!$a3) {
+        if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
+          //Don't count if role is hidden
+          if (!user_visit_is_hidden($user)) {
+            $referer = referer_uri();
+            //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
+            if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0) .'/'. arg(1))) {
+              //Count view
+              user_visits_count($user->uid, $node->uid);
+            }
+          }
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Check if user should be counted
+ */
+function user_visit_is_hidden($user) {
+  $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
+  return count($intersect) ? count($intersect) : FALSE;
+}
+
+/**
+ * Themeable function
+ */
+function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
+  $output  = '<div class="profile">'."\n";
+  $output .= theme('user_picture', $account);
+  $output .= ' <div class="name">'. theme('username', $account) .'</div>'."\n";
+  if ($timestamp) {
+    $output .= $timestamp ? ' <div class="visit">'. t('!time ago', array('!time' => format_interval(time() - $timestamp))) .'</div>'."\n" : '';
+    $output .= $referer ? ' <div class="referer">'. t('Referer !link', array('!link' => l($referer, $referer))) .'</div>'."\n" : '';
+  }
+  $output .= '</div>'."\n";
+  return $output;
+}
+
+/**
+ * Themeable function
+ */
+function theme_user_visits_total($total = 0) {
+  $output = '<div class="user_visits_total">'. t('Total visits %total', array('%total' => $total)) .'</div>';
+  return $output;
 }
 
 /**
@@ -223,64 +271,4 @@ function user_visits_settings() {
   );
   
   return system_settings_form($form);
-}
-
-/**
- * Implementation of hook_nodeapi().
- */
-function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  global $user;
-  
-  switch ($op) {
-    case 'view':
-      if (!$a3) {
-        if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
-          //Don't count if role is hidden
-          if (!user_visit_is_hidden($user)) {
-            $referer = referer_uri();
-            //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-            if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0) .'/'. arg(1))) {
-              //Count view
-              user_visits_count($user->uid, $node->uid);
-            }
-          }
-        }
-      }
-      break;
-  }
-}
-
-/**
- * Themeable function
- */
-function theme_user_visit($account, $timestamp = NULL, $referer = NULL) {
-  $output  = '<div class="profile">'."\n";
-  $output .= theme('user_picture', $account);
-  $output .= ' <div class="name">'. theme('username', $account) .'</div>'."\n";
-
-  if ($timestamp) {
-    $output .= $timestamp ? ' <div class="visit">'. t('!time ago', array('!time' => format_interval(time() - $timestamp))) .'</div>'."\n" : '';
-    $output .= $referer ? ' <div class="referer">'. t('Referer !link', array('!link' => l($referer, $referer))) .'</div>'."\n" : '';
-  }
-
-  $output .= '</div>'."\n";
-
-  return $output;
-}
-
-/**
- * Themeable function
- */
-function theme_user_visits_total($total = 0) {
-  $output = '<div class="user_visits_total">'. t('Total visits %total', array('%total' => $total)) .'</div>';
-  
-  return $output;
-}
-
-/**
- * Check if user should be counted
- */
-function user_visit_is_hidden($user) {
-  $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
-  return count($intersect) ? count($intersect) : FALSE;
 }
