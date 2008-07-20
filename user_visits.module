@@ -210,7 +210,7 @@ function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  */
 function user_visit_is_hidden($user) {
   $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
-  return count($intersect) ? count($intersect) : FALSE;
+  return count($intersect) ? TRUE : FALSE;
 }
 
 /**
