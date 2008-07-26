@@ -26,7 +26,7 @@ function user_visits_settings() {
   $roles = user_roles(TRUE);
   $form['user_activity_role'] = array(
     '#type' => 'fieldset',
-    '#title' => t('moje nastavenie role'),
+    '#title' => t('Role visibility'),
     '#description' => t("Choose roles and visits of selected roles will be not shown in user visit block."),
   );
   $form['user_activity_role']['user_visits_hidden_roles'] = array(
