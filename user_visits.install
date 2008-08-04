@@ -28,7 +28,10 @@ function user_visits_schema() {
         'type' => 'varchar',
         'length' => 255),
       ),
-    'primary key' => array('uid'),
+    'indexes' => array(
+      'uid'  => array('uid'),
+      'vuid' => array('vuid'),
+    ),
   );
   return $schema;
 }
