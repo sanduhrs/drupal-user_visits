@@ -64,8 +64,8 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
     );
     return $form;
   }
-  else if ($op == 'save' && $delta == 0) {
-    variable_set('user_visits_block_items', $edit['items']);
+  else if ($op == 'save') {
+    variable_set('user_visits_block_items_'. $delta, $edit['items']);
   }
   else if ($op == 'view') {
     $limit = variable_get('user_visits_block_items_'. $delta, 5);
