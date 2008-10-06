@@ -138,7 +138,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
           }
         }
         
-        $account->content['user_visits'] = array(
+        $account->content['summary']['user_visits'] = array(
           '#type' => 'user_profile_item',
           '#title' => t('Latest visitors'),
           '#value' => $output ? $output : t('No visits by now'),
@@ -237,7 +237,7 @@ function user_visits_theme($existing, $type, $theme, $path) {
  * Themeable function
  */
 function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
-  $output  = '<div class="profile">'."\n";
+  $output  = '<div>'."\n";
   $output .= theme('user_picture', $account);
   $output .= ' <div class="name">'. theme('username', $account) .'</div>'."\n";
   if ($timestamp) {
