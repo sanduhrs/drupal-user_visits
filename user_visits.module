@@ -119,20 +119,8 @@ function user_visits_perm() {
  * Implementation of hook_user();
  */
 function user_visits_user($op, &$edit, &$account, $category = NULL) {
-  global $user;
-
   switch ($op) {
     case 'view':
-      //Don't count if role is hidden
-      if (!user_visit_is_hidden($user)) {
-        $referer = referer_uri();
-        //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-        if ($user->uid && $user->uid != $account->uid && !strpos(referer_uri(), arg(0) .'/'. arg(1))) {
-          //Count view
-          user_visits_count($user->uid, $account->uid);
-        }
-      }
-      
       //Display visitors on the user's profile
       if (variable_get('user_visits_display', 0)) {
         $visitors = user_visits_latest($account->uid);
@@ -186,36 +174,76 @@ function user_visits_latest($uid, $limit = 5) {
 }
 
 /**
- * Implementation of hook_nodeapi().
- */
-function user_visits_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  global $user;
-  
-  switch ($op) {
-    case 'view':
-      if (!$a3) {
-        if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
-          //Don't count if role is hidden
-          if (!user_visit_is_hidden($user)) {
-            $referer = referer_uri();
-            //Don't count anonymous- and self-clicks. Try not to count clicks from the user's other profile pages
-            if ($user->uid && $user->uid != $node->uid && !strpos(referer_uri(), arg(0) .'/'. arg(1))) {
-              //Count view
-              user_visits_count($user->uid, $node->uid);
-            }
-          }
-        }
-      }
-      break;
-  }
-}
-
-/**
  * Check if user should be counted
  */
 function user_visit_is_hidden($user) {
   $intersect = array_intersect_key($user->roles, variable_get('user_visits_hidden_roles', array()));
   return count($intersect) ? TRUE : FALSE;
+}
+
+/**
+ * Implementation of hook_exit().
+ */
+function user_visits_exit() {
+  global $user;
+  $referer = referer_uri();
+  $i = 0;
+
+  //Don't count anonymous-clicks
+  if (!$user->uid) {
+    return;
+  }
+
+  //Don't count if role is hidden
+  if (user_visit_is_hidden($user)) {
+    return;
+  }
+  //Try not to count clicks from the user's other profile pages
+  if (strpos(referer_uri(), arg(0) .'/'. arg(1))) {
+    return;
+  }
+
+  // Record visits on profile nodes
+  if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
+    $node = node_load(array('nid' => arg(1)));
+    if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
+      //Don't count self-clicks
+      if ($user->uid != $node->uid) {
+        //Count view
+        user_visits_count($user->uid, $node->uid);
+      }
+    }
+  }
+  // Record visits on user profile pages
+  else if (arg(0) == 'user' && is_numeric(arg(1)) && !arg(2)) {
+    //Don't count self-clicks
+    if ($user->uid != arg(1)) {
+      //Count view
+      user_visits_count($user->uid, arg(1));
+    }
+  }
+  // Record visits on custom paths
+  else {
+    $path = variable_get('user_visits_path', '');
+    if (strlen($path) && arg(0)) {
+      $chunks = explode('/', $path);
+      foreach ($chunks as $chunk) {
+        if (arg($i) == $chunk OR $chunk == '%') {
+          if (is_numeric(arg($i)) AND !arg($i+1)) {
+            //Don't count self-clicks
+            if ($user->uid != arg($i)) {
+              //Count view
+              user_visits_count($user->uid, arg($i));
+            }
+          }
+          $i++;
+        }
+        else {
+          break;
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -265,11 +293,22 @@ function user_visits_settings() {
   $form['user_visits_role']['user_visits_hidden_roles'] = array(
       '#type' => 'select',
       '#title' => t('Hidden Roles'),
-      '#description' => t('visits of selected roles will be not shown in user visit block.'),
+      '#description' => t('Visits of selected roles will not be recorded.'),
       '#options' => $roles,
       '#multiple' => TRUE,
       '#default_value' => variable_get('user_visits_hidden_roles', array()),      
   );
-  
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['advanced']['user_visits_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom record path'),
+    '#description' => t('Set a custom path to record visits, e.g. <em>user/%</em>. This may be useful in case other modules override the default user profile.'),
+    '#default_value' => variable_get('user_visits_path', ''),
+  );
   return system_settings_form($form);
 }
