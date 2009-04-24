@@ -126,8 +126,8 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
         $visitors = user_visits_latest($account->uid);
         if (is_array($visitors)) {
           foreach ($visitors as $visitor) {
-            $account = user_load(array('uid' => $visitor->vuid));
-            $output .= theme('user_visits', $account, $visitor->visit, $visitor->referer);
+            $user_account = user_load(array('uid' => $visitor->vuid));
+            $output .= theme('user_visits', $user_account, $visitor->visit, $visitor->referer);
           }
         }
   
