@@ -37,6 +37,17 @@ function user_visits_settings() {
       '#multiple' => TRUE,
       '#default_value' => variable_get('user_visits_hidden_roles', array()),
   );
-
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['advanced']['user_visits_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom record path'),
+    '#description' => t('Set a custom path to record visits, e.g. <em>user/%</em>. This may be useful in case other modules override the default user profile.'),
+    '#default_value' => variable_get('user_visits_path', ''),
+  );
   return system_settings_form($form);
 }
