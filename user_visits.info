@@ -1,4 +1,3 @@
-; $Id$
 name         = User Visits
 description  = "Shows who has visited a user's profile lately."
 core = 6.x
