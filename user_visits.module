@@ -22,9 +22,7 @@ function user_visits_help($path, $arg) {
  * Implementation of hook_menu();
  */
 function user_visits_menu() {
-  global $user;
-
-  $items['admin/user/user_visits'] = array(
+  $items['admin/people/user_visits'] = array(
     'title' => 'User visits',
     'description' => "Configure where to display a user's visitors.",
     'page callback' => 'drupal_get_form',
@@ -37,49 +35,59 @@ function user_visits_menu() {
 }
 
 /**
- * Implementation of hook_block().
+ * Implements hook_block_info().
  */
-function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
-  if ($op == 'list') {
-    $blocks[0] = array(
-      'info' => t('Latest visitors'),
-    );
-    $blocks[1] = array(
-      'info' => t('My latest visitors'),
-    );
-    return $blocks;
+function user_visits_block_info() {
+  $blocks[0] = array(
+    'info' => t('Latest visitors'),
+  );
+  $blocks[1] = array(
+    'info' => t('My latest visitors'),
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function user_visits_block_configure($delta = 0) {
+  $form['items'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of items'),
+    '#default_value' => variable_get('user_visits_block_items_'. $delta, 5),
+    '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25)),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ */
+function user_visits_block_save($delta = 0, $edit = array()) {
+  variable_set('user_visits_block_items_'. $delta, $edit['items']);
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function user_visits_block_view($delta = 0) {
+  $limit = variable_get('user_visits_block_items_'. $delta, 5);
+  switch ($delta) {
+    case 0:
+      $block = array(
+        'subject' => t('Latest visitors'),
+        'content' => user_visits_display_block_1(NULL, $limit),
+      );
+      break;
+    case 1:
+      global $user;
+      $block = array(
+        'subject' => t('My latest visitors'),
+        'content' => user_visits_display_block_1($user->uid, $limit),
+      );
+      break;
   }
-  else if ($op == 'configure') {
-    $form['items'] = array(
-      '#type' => 'select',
-      '#title' => t('Number of items'),
-      '#default_value' => variable_get('user_visits_block_items_'. $delta, 5),
-      '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25)),
-    );
-    return $form;
-  }
-  else if ($op == 'save') {
-    variable_set('user_visits_block_items_'. $delta, $edit['items']);
-  }
-  else if ($op == 'view') {
-    $limit = variable_get('user_visits_block_items_'. $delta, 5);
-    switch ($delta) {
-      case 0:
-        $block = array(
-          'subject' => t('Latest visitors'),
-          'content' => user_visits_display_block_1(NULL, $limit),
-          );
-        break;
-      case 1:
-        global $user;
-        $block = array(
-          'subject' => t('My latest visitors'),
-          'content' => user_visits_display_block_1($user->uid, $limit),
-          );
-        break;
-    }
-    return $block;
-  }
+  return $block;
 }
 
 /**
@@ -94,74 +102,91 @@ function user_visits_display_block_1($uid = NULL, $limit = 5) {
     if (is_array($visitors)) {
       foreach ($visitors as $visitor) {
         $account = user_load(array('uid' => $visitor->vuid));
-        $output .= theme('user_visits', $account, $visitor->visit);
+        $output .= theme('user_visits', array('account' => $account, 'timestamp' => $visitor->visit));
       }
     }
-    $output .= theme('user_visits_total', user_visits_total($uid));
+    $output .= theme('user_visits_total', array('total' => user_visits_total($uid)));
   }
   return $output;
 }
 
 /**
- * Implementation of hook_perm();
+ * Implements hook_permission();
  */
-function user_visits_perm() {
-  return array('administer user visits');
+function user_visits_permission() {
+  return array(
+    'administer user visits' => array(
+      'title' => t('Administer user visits'),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_user();
+ * Implements hook_user_view();
  */
-function user_visits_user($op, &$edit, &$account, $category = NULL) {
-  switch ($op) {
-    case 'view':
-      //Display visitors on the user's profile
-      if (variable_get('user_visits_display', 0)) {
-        $visitors = user_visits_latest($account->uid);
-        if (is_array($visitors)) {
-          foreach ($visitors as $visitor) {
-            $user_account = user_load(array('uid' => $visitor->vuid));
-            $output .= theme('user_visits', $user_account, $visitor->visit, $visitor->referer);
-          }
-        }
-        
-        $account->content['summary']['user_visits'] = array(
-          '#type' => 'user_profile_item',
-          '#title' => t('Latest visitors'),
-          '#value' => $output ? $output : t('No visits by now'),
-          '#weight' => 10,
-          '#attributes' => array('class' => 'user-visits'),
-        );
+function user_visits_user_view($account, $view_mode, $langcode) {
+  // Display visitors on the user's profile.
+  if (variable_get('user_visits_display', 0)) {
+    $visitors = user_visits_latest($account->uid);
+    if (is_array($visitors)) {
+      foreach ($visitors as $visitor) {
+        $user_account = user_load($visitor->vuid);
+        $output .= theme('user_visits', array('account' => $user_account, 'timestamp' => $visitor->visit, 'referer' => $visitor->referer));
       }
-      break;
-    case 'delete':
-      db_query("DELETE FROM {user_visits} WHERE uid=%d", $account->uid);
-      break;
+    }
+    
+    $account->content['summary']['user_visits'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => t('Latest visitors'),
+      '#markup' => isset($output) ? $output : t('No visits by now'),
+      '#weight' => 10,
+      '#attributes' => array('class' => 'user-visits'),
+    );
   }
-  
+}
+
+/**
+ * Implements hook_user_delete();
+ */
+function user_visits_user_delete(&$edit, &$account, $category = NULL) {
+  db_delete('user_visits')
+    ->condition('uid', $account->uid)
+    ->execute();
 }
 
 /**
  * Update counter
  */
 function user_visits_count($vuid, $uid) {
-  db_query("DELETE FROM {user_visits} WHERE uid=%d AND vuid=%d", $uid, $vuid);
-  return db_query("INSERT INTO {user_visits} (uid, vuid, visit, referer) VALUES (%d, %d, %d, '%s')", $uid, $vuid, time(), referer_uri());
+  db_delete('user_visits')
+    ->condition('uid', $uid)
+    ->condition('vuid', $vuid)
+    ->execute();
+  
+  $item = array();
+  $item['uid'] = $uid;
+  $item['vuid'] = $vuid;
+  $item['visit'] = REQUEST_TIME;
+  $item['referer'] = $_SERVER['HTTP_REFERER'];
+
+  return drupal_write_record('user_visits', $item);
 }
 
 /**
  * Get the total of visits
  */
 function user_visits_total($uid) {
-  return db_result(db_query("SELECT COUNT(visit) AS count FROM {user_visits} WHERE uid=%d", $uid));
+  return db_query("SELECT COUNT(visit) AS count FROM {user_visits} WHERE uid = :uid", array(':uid' => $uid))->fetchField();
 }
 
 /**
  * Get the latest visits
  */
 function user_visits_latest($uid, $limit = 5) {
-  $result = db_query("SELECT * FROM {user_visits} WHERE uid=%d ORDER BY visit DESC LIMIT %d", $uid, $limit);
-  while ($visitor = db_fetch_object($result)) {
+  $result = db_query_range("SELECT * FROM {user_visits} WHERE uid = :uid ORDER BY visit DESC", 0, $limit, array(':uid' => $uid));
+
+  $visitors = array();
+  foreach ($result as $visitor) {
     $visitors[] = $visitor;
   }
   return $visitors;
@@ -180,7 +205,7 @@ function user_visit_is_hidden($user) {
  */
 function user_visits_exit() {
   global $user;
-  $referer = referer_uri();
+  $referer = $_SERVER['HTTP_REFERER'];
   $i = 0;
 
   //Don't count anonymous-clicks
@@ -193,13 +218,12 @@ function user_visits_exit() {
     return;
   }
   //Try not to count clicks from the user's other profile pages
-  if (strpos(referer_uri(), arg(0) .'/'. arg(1))) {
+  if (strpos($_SERVER['HTTP_REFERER'], arg(0) .'/'. arg(1))) {
     return;
   }
 
   // Record visits on profile nodes
-  if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
-    $node = node_load(array('nid' => arg(1)));
+  if ($node = menu_get_object()) {
     if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
       //Don't count self-clicks
       if ($user->uid != $node->uid) {
@@ -246,14 +270,14 @@ function user_visits_exit() {
 function user_visits_theme($existing, $type, $theme, $path) {
   return array(
     'user_visits' => array(
-      'arguments' => array(
+      'variables' => array(
         'account'   => NULL,
         'timestamp' => NULL,
         'referer'   => NULL,
       ),
     ),
     'user_visits_total' => array(
-      'arguments' => array(
+      'variables' => array(
         'total'   => NULL,
       ),
     ),
@@ -263,10 +287,14 @@ function user_visits_theme($existing, $type, $theme, $path) {
 /**
  * Themeable function
  */
-function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
+function theme_user_visits($vars) {
+  $account = $vars['account'];
+  $timestamp = $vars['timestamp'];
+  $referer = $vars['referer'];
+
   $output  = '<div>'."\n";
-  $output .= theme('user_picture', $account);
-  $output .= ' <div class="name">'. theme('username', $account) .'</div>'."\n";
+  $output .= theme('user_picture', array('account' => $account));
+  $output .= ' <div class="name">'. theme('username', array('account' => $account)) .'</div>'."\n";
   if ($timestamp) {
     $output .= $timestamp ? ' <div class="visit">'. t('!time ago', array('!time' => format_interval(time() - $timestamp))) .'</div>'."\n" : '';
     $output .= $referer ? ' <div class="referer">'. t('Referer !link', array('!link' => l($referer, $referer))) .'</div>'."\n" : '';
@@ -278,7 +306,9 @@ function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
 /**
  * Themeable function
  */
-function theme_user_visits_total($total = 0) {
+function theme_user_visits_total($vars) {
+  $total = $vars['total'];
+
   $output = '<div class="user_visits_total">'. t('Total visits %total', array('%total' => $total)) .'</div>';
   return $output;
 }
