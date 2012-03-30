@@ -1,5 +1,5 @@
 name         = User Visits
 description  = "Shows who has visited a user's profile lately."
-core = 6.x
+core = 7.x
 ; dependencies = module1 module2 module3
 ; package      = "Your arbitrary grouping string"

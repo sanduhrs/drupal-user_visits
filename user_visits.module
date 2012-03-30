@@ -2,7 +2,7 @@
 
 /**
  * User visits
- * 
+ *
  * @author
  * Stefan Auditor <stefan.auditor@erdfisch.de>
  */
@@ -30,7 +30,7 @@ function user_visits_menu() {
     'access arguments' => array('administer user visits'),
     'file' => 'user_visits.admin.inc',
   );
-  
+
   return $items;
 }
 
@@ -97,11 +97,12 @@ function user_visits_display_block_1($uid = NULL, $limit = 5) {
   if (!$uid && (arg(0) == 'user' && is_numeric(arg(1)))) {
     $uid = arg(1);
   }
+  $output = '';
   if ($uid) {
     $visitors = user_visits_latest($uid, $limit);
     if (is_array($visitors)) {
       foreach ($visitors as $visitor) {
-        $account = user_load(array('uid' => $visitor->vuid));
+        $account = user_load($visitor->vuid);
         $output .= theme('user_visits', array('account' => $account, 'timestamp' => $visitor->visit));
       }
     }
@@ -134,7 +135,7 @@ function user_visits_user_view($account, $view_mode, $langcode) {
         $output .= theme('user_visits', array('account' => $user_account, 'timestamp' => $visitor->visit, 'referer' => $visitor->referer));
       }
     }
-    
+
     $account->content['summary']['user_visits'] = array(
       '#type' => 'user_profile_item',
       '#title' => t('Latest visitors'),
@@ -162,7 +163,7 @@ function user_visits_count($vuid, $uid) {
     ->condition('uid', $uid)
     ->condition('vuid', $vuid)
     ->execute();
-  
+
   $item = array();
   $item['uid'] = $uid;
   $item['vuid'] = $vuid;
