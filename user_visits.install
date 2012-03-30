@@ -26,7 +26,7 @@ function user_visits_schema() {
         'not null' => TRUE
       ),
       'referer' => array(
-        'description' => 'Whre the user came from.',
+        'description' => 'Where the user came from.',
         'type' => 'varchar',
         'length' => 255
       ),
