@@ -23,7 +23,7 @@ function user_visits_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE),
       'referer' => array(
-        'description' => t('Whre the user came from.'),
+        'description' => t('Where the user came from.'),
         'type' => 'varchar',
         'length' => 255),
       ),
