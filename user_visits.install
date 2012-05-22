@@ -1,11 +1,16 @@
 <?php
 
 /**
- * Implementation of hook_schema().
+ * @file
+ * User visits - install file
+ */
+
+/**
+ * Implements hook_schema().
  */
 function user_visits_schema() {
   $schema['user_visits'] = array(
-    'description' => 'The base table user activity.',
+    'description' => 'The base table for user activity.',
     'fields' => array(
       'uid' => array(
         'description' => 'The primary identifier for a user.',
@@ -40,10 +45,8 @@ function user_visits_schema() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function user_visits_uninstall() {
-  variable_del('user_visits_display');
-  variable_del('user_visits_block_items_0');
-  variable_del('user_visits_block_items_1');
+  db_query("DELETE FROM {variables} WHERE name LIKE 'user_visits%%'");
 }
