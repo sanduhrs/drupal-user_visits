@@ -57,7 +57,7 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
       '#default_value' => variable_get('user_visits_block_items_' . $delta, 5),
       '#options' => drupal_map_assoc(array(
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25)
-        ),
+      ),
     );
     return $form;
   }
@@ -73,12 +73,13 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
           'content' => user_visits_display_block_1(NULL, $limit),
         );
         break;
+
       case 1:
         global $user;
         $block = array(
           'subject' => t('My latest visitors'),
           'content' => user_visits_display_block_1($user->uid, $limit),
-          );
+        );
         break;
     }
     return $block;
@@ -271,8 +272,8 @@ function theme_user_visits($account, $timestamp = NULL, $referer = NULL) {
   $output .= theme('user_picture', $account);
   $output .= ' <div class="name">' . theme('username', $account) . '</div>' . "\n";
   if ($timestamp) {
-    $output .= $timestamp ? ' <div class="visit">'. t('!time ago', array('!time' => format_interval(time() - $timestamp))) . '</div>' . "\n" : '';
-    $output .= $referer ? ' <div class="referer">'. t('Referer !link', array('!link' => l($referer, $referer))) .'</div>' . "\n" : '';
+    $output .= $timestamp ? ' <div class="visit">' . t('!time ago', array('!time' => format_interval(time() - $timestamp))) . '</div>' . "\n" : '';
+    $output .= $referer ? ' <div class="referer">' . t('Referer !link', array('!link' => l($referer, $referer))) . '</div>' . "\n" : '';
   }
   $output .= '</div>' . "\n";
   return $output;
