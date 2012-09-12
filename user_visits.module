@@ -2,7 +2,7 @@
 
 /**
  * User visits
- * 
+ *
  * @author
  * Stefan Auditor <stefan.auditor@erdfisch.de>
  */
@@ -32,7 +32,7 @@ function user_visits_menu() {
     'access arguments' => array('administer user visits'),
     'file' => 'user_visits.admin.inc',
   );
-  
+
   return $items;
 }
 
@@ -49,7 +49,7 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
     );
     return $blocks;
   }
-  else if ($op == 'configure') {
+  elseif ($op == 'configure') {
     $form['items'] = array(
       '#type' => 'select',
       '#title' => t('Number of items'),
@@ -58,10 +58,10 @@ function user_visits_block($op = 'list', $delta = 0, $edit = array()) {
     );
     return $form;
   }
-  else if ($op == 'save') {
+  elseif ($op == 'save') {
     variable_set('user_visits_block_items_'. $delta, $edit['items']);
   }
-  else if ($op == 'view') {
+  elseif ($op == 'view') {
     $limit = variable_get('user_visits_block_items_'. $delta, 5);
     switch ($delta) {
       case 0:
@@ -115,7 +115,7 @@ function user_visits_perm() {
 function user_visits_user($op, &$edit, &$account, $category = NULL) {
   switch ($op) {
     case 'view':
-      //Display visitors on the user's profile
+      // Display visitors on the user's profile.
       if (variable_get('user_visits_display', 0)) {
         $visitors = user_visits_latest($account->uid);
         if (is_array($visitors)) {
@@ -124,7 +124,7 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
             $output .= theme('user_visits', $user_account, $visitor->visit, $visitor->referer);
           }
         }
-        
+
         $account->content['summary']['user_visits'] = array(
           '#type' => 'user_profile_item',
           '#title' => t('Latest visitors'),
@@ -138,7 +138,6 @@ function user_visits_user($op, &$edit, &$account, $category = NULL) {
       db_query("DELETE FROM {user_visits} WHERE uid=%d", $account->uid);
       break;
   }
-  
 }
 
 /**
@@ -183,50 +182,50 @@ function user_visits_exit() {
   $referer = referer_uri();
   $i = 0;
 
-  //Don't count anonymous-clicks
+  // Don't count anonymous-clicks.
   if (!$user->uid) {
     return;
   }
 
-  //Don't count if role is hidden
+  // Don't count if role is hidden.
   if (user_visit_is_hidden($user)) {
     return;
   }
-  //Try not to count clicks from the user's other profile pages
+  // Try not to count clicks from the user's other profile pages.
   if (strpos(referer_uri(), arg(0) .'/'. arg(1))) {
     return;
   }
 
-  // Record visits on profile nodes
+  // Record visits on profile nodes.
   if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
     $node = node_load(array('nid' => arg(1)));
     if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
-      //Don't count self-clicks
+      // Don't count self-clicks.
       if ($user->uid != $node->uid) {
-        //Count view
+        // Count view.
         user_visits_count($user->uid, $node->uid);
       }
     }
   }
-  // Record visits on user profile pages
-  else if (arg(0) == 'user' && is_numeric(arg(1)) && !arg(2)) {
-    //Don't count self-clicks
+  // Record visits on user profile pages.
+  elseif (arg(0) == 'user' && is_numeric(arg(1)) && !arg(2)) {
+    // Don't count self-clicks.
     if ($user->uid != arg(1)) {
-      //Count view
+      // Count view.
       user_visits_count($user->uid, arg(1));
     }
   }
-  // Record visits on custom paths
+  // Record visits on custom paths.
   else {
     $path = variable_get('user_visits_path', '');
-    if (strlen($path) && arg(0)) {
+    if (drupal_strlen($path) && arg(0)) {
       $chunks = explode('/', $path);
       foreach ($chunks as $chunk) {
         if (arg($i) == $chunk OR $chunk == '%') {
           if (is_numeric(arg($i)) AND !arg($i+1)) {
-            //Don't count self-clicks
+            // Don't count self-clicks.
             if ($user->uid != arg($i)) {
-              //Count view
+              // Count view.
               user_visits_count($user->uid, arg($i));
             }
           }

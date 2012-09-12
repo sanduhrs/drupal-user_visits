@@ -1,7 +1,12 @@
 <?php
 
 /**
- * User visits 
+ * @file
+ * User visits - admin pages
+ */
+
+/**
+ * User visits
  *
  * @author
  * Stefan Auditor >stefan.auditor@erdfisch.de>

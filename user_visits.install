@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * User visits - install file
+ */
+
+/**
  * Implementation of hook_schema().
  */
 function user_visits_schema() {
