@@ -92,7 +92,7 @@ function user_visits_block_view($delta = '') {
 }
 
 /**
- * Get latest visitors for block content
+ * Get latest visitors for block content.
  */
 function user_visits_display_block_1($uid = NULL, $limit = 5) {
   $output = "";
@@ -214,7 +214,7 @@ function user_visits_exit() {
   global $user;
   $referer = $_SERVER['HTTP_REFERER'];
 
-  // Don't count if user no has access to profile
+  // Don't count if user no has access to profile.
   if (!user_access('access user profiles')) {
     return;
   }

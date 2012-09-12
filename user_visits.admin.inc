@@ -6,7 +6,7 @@
  */
 
 /**
- * Settings page
+ * Settings page.
  */
 function user_visits_settings() {
   $form['user_activity'] = array(
