@@ -6,32 +6,32 @@
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function user_visits_schema() {
   $schema['user_visits'] = array(
-    'description' => t('The base table user activity.'),
+    'description' => 'The base table user activity.',
     'fields' => array(
       'uid' => array(
-        'description' => t('The primary identifier for a user.'),
+        'description' => 'The primary identifier for a user.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE),
       'vuid' => array(
-        'description' => t('The primary identifier for a visitor.'),
+        'description' => 'The primary identifier for a visitor.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE),
       'visit' => array(
-        'description' => t('Timestamp of visit.'),
+        'description' => 'Timestamp of visit.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE),
       'referer' => array(
-        'description' => t('Where the user came from.'),
+        'description' => 'Where the user came from.',
         'type' => 'varchar',
         'length' => 255),
-      ),
+    ),
     'indexes' => array(
       'uid'  => array('uid'),
       'vuid' => array('vuid'),
@@ -41,14 +41,14 @@ function user_visits_schema() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function user_visits_install() {
   drupal_install_schema('user_visits');
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function user_visits_uninstall() {
   drupal_uninstall_schema('user_visits');
