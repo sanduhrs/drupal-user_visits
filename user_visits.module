@@ -204,7 +204,7 @@ function user_visits_exit() {
   // Record visits on profile nodes.
   if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
     $node = node_load(array('nid' => arg(1)));
-    if ((module_exists('nodeprofile') && is_nodeprofile($node->type)) OR (module_exists('usernode') && $nody->type == USERNODE_CONTENT_TYPE)) {
+    if (module_exists('content_profile') && is_content_profile($node->type)) {
       // Don't count self-clicks.
       if ($user->uid != $node->uid) {
         // Count view.
