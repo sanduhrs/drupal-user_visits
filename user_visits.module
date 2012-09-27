@@ -13,7 +13,6 @@ function user_visits_help($path, $arg) {
   switch ($path) {
     case "admin/help#user-visits":
       return t("<p>Counts the visits to a user's profile.</p>");
-      break;
   }
 }
 
