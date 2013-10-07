@@ -1,0 +1,6 @@
+services:
+  user_visits.terminate:
+    class: Drupal\user_visits\TerminateEventSubscriber
+    arguments: ['@current_user', '@config.factory']
+    tags:
+      - { name: event_subscriber }

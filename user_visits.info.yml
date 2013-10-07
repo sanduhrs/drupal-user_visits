@@ -1,0 +1,7 @@
+name: User Visits
+description: "Shows who has visited a user's profile lately."
+core: 8.x
+configure: admin/config/people/user_visits
+dependencies:
+  - user
+type: module

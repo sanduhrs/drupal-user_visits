@@ -1,4 +1,0 @@
-name = User Visits
-description = "Shows who has visited a user's profile lately."
-core = 7.x
-configure = admin/config/people/user_visits

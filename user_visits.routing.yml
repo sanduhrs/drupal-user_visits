@@ -1,0 +1,28 @@
+user_visits.settings:
+  path: '/admin/config/people/user_visits'
+  defaults:
+    _form: 'Drupal\user_visits\Form\SettingsForm'
+    _title: 'User visits settings'
+  options:
+    _access_mode: 'ANY'
+  requirements:
+    _permission: 'administer user visits'
+
+user_visits.user:
+  path: '/admin/config/people/user_visits/{user}/test'
+  defaults:
+    _content: 'Drupal\user_visits\Controller\Test::content2'
+    _title: 'User visits settings'
+  options:
+    _access_mode: 'ANY'
+  requirements:
+    _permission: 'administer user visits'
+
+#  $items['admin/config/people/user_visits'] = array(
+#    'title' => 'User visits',
+#    'description' => "Configure where to display a user's visitors.",
+#    'page callback' => 'drupal_get_form',
+#    'page arguments' => array('user_visits_settings'),
+#    'access arguments' => array('administer user visits'),
+#    'file' => 'user_visits.admin.inc',
+#  );
