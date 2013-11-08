@@ -124,7 +124,7 @@ function user_visits_permission() {
 }
 
 /**
- * Implements of hook_user_view().
+ * Implements hook_user_view().
  */
 function user_visits_user_view($account, $view_mode, $langcode) {
   $output = "";
@@ -207,7 +207,7 @@ function user_visits_is_hidden($user) {
 }
 
 /**
- * Implements of hook_exit().
+ * Implements hook_exit().
  */
 function user_visits_exit() {
   global $user;
@@ -243,7 +243,7 @@ function user_visits_exit() {
 }
 
 /**
- * Implements of hook_theme().
+ * Implements hook_theme().
  */
 function user_visits_theme($existing, $type, $theme, $path) {
   return array(
